@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Todo List</title>
+</head>
+
+<body class="bg-[#69bcf4] font-sans text-white/85 flex justify-center items-center h-screen m-0">
+  <div class="bg-[rgba(15,67,144,0.95)] border-2 border-[#0f4390] rounded-lg text-center w-[400px] p-8 shadow-md">
+    <h1 class="text-2xl mb-4">MY TODO LIST</h1>
+
+    <div class="flex justify-center items-center mb-4">
+      <form action="/addTask" method="POST" class="flex">
+        <input type="text" name="taskName" class="bg-[#28a6e6] mr-2 border-none p-2.5 rounded-md text-white placeholder-white/70"
+          placeholder="Enter your task" required>
+        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-700 transition ease-in-out duration-300">Add</button>
+      </form>
+    </div>
+
+    <div id="taskContainer">
+      <strong><u>My Tasks</u></strong>
+      <ul>
+        <% tasks.forEach(function(task) { %>
+        <li class="checkBox flex justify-between items-center p-2.5 bg-white/20 rounded-md mb-2">
+          <div class="left-side flex items-center">
+            <form action="/toggleTask" method="POST">
+              <input type="hidden" name="taskId" value="<%= task._id %>">
+              <input type="checkbox" onchange="this.form.submit()" <%= task.completed ? 'checked' : '' %> >
+              <span class="ml-2 max-w-[200px] break-words text-white <%= task.completed ? 'line-through' : '' %>">
+                <%= task.name %>
+              </span>
+            </form>
+          </div>
+          <form action="/removeTask" method="POST">
+            <input type="hidden" name="taskId" value="<%= task._id %>">
+            <button class="bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-700 transition ease-in-out duration-300">Remove</button>
+          </form>
+        </li>
+        <% }) %>
+      </ul>
+    </div>
+
+    <p class="mt-4">
+      <center>Completed: <%= tasks.filter(t => t.completed).length %> | Uncompleted: <%= tasks.filter(t => !t.completed).length %></center>
+    </p>
+  </div>
+</body>
+
+</html>
