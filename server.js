@@ -38,9 +38,9 @@ const User = mongoose.model('User', userSchema);
 // Middleware to check if user is authenticated
 const isAuthenticated = (req, res, next) => {
   if (req.session.userId) {
-    next();
+    next(); // User is authenticated, proceed to next middleware or route
   } else {
-    res.redirect('/login');
+    res.redirect('/login'); // Redirect to login page if not authenticated
   }
 };
 
@@ -69,7 +69,7 @@ app.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ email, password: hashedPassword, tasks: [] });
     await newUser.save();
-    req.session.userId = newUser._id;
+    req.session.userId = newUser._id; // Set session userId
     res.redirect('/todolist');
   } catch (error) {
     res.render('signup', { error: 'An error occurred. Please try again.' });
@@ -87,7 +87,7 @@ app.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && await bcrypt.compare(password, user.password)) {
-      req.session.userId = user._id;
+      req.session.userId = user._id; // Set session userId
       res.redirect('/todolist');
     } else {
       res.render('login', { error: 'Invalid email or password' });
@@ -111,7 +111,9 @@ app.get('/logout', (req, res) => {
 app.get('/todolist', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
-    res.render('todolist', { tasks: user.tasks });
+    const completedTasks = user.tasks.filter(task => task.completed).length;
+    const incompleteTasks = user.tasks.filter(task => !task.completed).length;
+    res.render('todolist', { tasks: user.tasks, completedTasks, incompleteTasks });
   } catch (error) {
     res.render('todolist', { tasks: [], error: 'Could not fetch tasks. Please try again.' });
   }
@@ -155,17 +157,6 @@ app.post('/toggleTask', isAuthenticated, async (req, res) => {
     res.redirect('/todolist', { error: 'Could not update task. Please try again.' });
   }
 });
-app.get('/todolist', isAuthenticated, async (req, res) => {
-  try {
-    const user = await User.findById(req.session.userId);
-    const completedTasks = user.tasks.filter(task => task.completed).length;
-    const incompleteTasks = user.tasks.filter(task => !task.completed).length;
-    res.render('todolist', { tasks: user.tasks, completedTasks, incompleteTasks });
-  } catch (error) {
-    res.render('todolist', { tasks: [], error: 'Could not fetch tasks. Please try again.' });
-  }
-});
-
 
 // Error handling for undefined routes
 app.use((req, res) => {
