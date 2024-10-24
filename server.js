@@ -155,6 +155,17 @@ app.post('/toggleTask', isAuthenticated, async (req, res) => {
     res.redirect('/todolist', { error: 'Could not update task. Please try again.' });
   }
 });
+app.get('/todolist', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const completedTasks = user.tasks.filter(task => task.completed).length;
+    const incompleteTasks = user.tasks.filter(task => !task.completed).length;
+    res.render('todolist', { tasks: user.tasks, completedTasks, incompleteTasks });
+  } catch (error) {
+    res.render('todolist', { tasks: [], error: 'Could not fetch tasks. Please try again.' });
+  }
+});
+
 
 // Error handling for undefined routes
 app.use((req, res) => {
