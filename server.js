@@ -1,30 +1,28 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
-import bcrypt from 'bcrypt';  // For password hashing
-import session from 'express-session'; // For session management
-import dotenv from 'dotenv'; // For environment variables
+import bcrypt from 'bcrypt';  
+import session from 'express-session'; 
+import dotenv from 'dotenv'; 
 
-dotenv.config(); // Load environment variables from .env file
+dotenv.config(); 
 
 const app = express();
 
-// Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your_secret_key', 
   resave: false, 
-  saveUninitialized: false, // Only save session if something changes
-  cookie: { secure: false } // set true for HTTPS
+  saveUninitialized: false, 
+  cookie: { secure: false } 
 }));
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/todoListDB', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => console.log("MongoDB connected"))
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/todoListDB')
+  .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
+
 
 // Schemas
 const userSchema = new mongoose.Schema({
@@ -38,20 +36,20 @@ const User = mongoose.model('User', userSchema);
 // Middleware to check if user is authenticated
 const isAuthenticated = (req, res, next) => {
   if (req.session.userId) {
-    next(); // User is authenticated, proceed to next middleware or route
+    next(); 
   } else {
-    res.redirect('/login'); // Redirect to login page if not authenticated
+    res.redirect('/login'); 
   }
 };
 
-// Routes
 
-// Home Page
+
+
 app.get('/', (req, res) => {
   res.render('home');
 });
 
-// Signup Page
+
 app.get('/signup', (req, res) => {
   res.render('signup');
 });
@@ -60,7 +58,7 @@ app.post('/signup', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Check if user already exists
+    
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.render('signup', { error: 'Email already registered' });
@@ -69,14 +67,14 @@ app.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ email, password: hashedPassword, tasks: [] });
     await newUser.save();
-    req.session.userId = newUser._id; // Set session userId
+    req.session.userId = newUser._id; 
     res.redirect('/todolist');
   } catch (error) {
     res.render('signup', { error: 'An error occurred. Please try again.' });
   }
 });
 
-// Login Page
+
 app.get('/login', (req, res) => {
   res.render('login', { error: null });
 });
@@ -87,7 +85,7 @@ app.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && await bcrypt.compare(password, user.password)) {
-      req.session.userId = user._id; // Set session userId
+      req.session.userId = user._id; 
       res.redirect('/todolist');
     } else {
       res.render('login', { error: 'Invalid email or password' });
@@ -97,7 +95,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Logout route
+
 app.get('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) {
@@ -107,7 +105,7 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// To-Do List Page (only accessible if authenticated)
+
 app.get('/todolist', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
@@ -119,7 +117,7 @@ app.get('/todolist', isAuthenticated, async (req, res) => {
   }
 });
 
-// Add Task
+
 app.post('/addTask', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
@@ -131,7 +129,7 @@ app.post('/addTask', isAuthenticated, async (req, res) => {
   }
 });
 
-// Remove Task
+
 app.post('/removeTask', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
@@ -143,7 +141,7 @@ app.post('/removeTask', isAuthenticated, async (req, res) => {
   }
 });
 
-// Toggle Task Completion
+
 app.post('/toggleTask', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
@@ -158,12 +156,8 @@ app.post('/toggleTask', isAuthenticated, async (req, res) => {
   }
 });
 
-// Error handling for undefined routes
-app.use((req, res) => {
-  res.status(404).render('404', { error: 'Page not found' });
-});
 
-const port = process.env.PORT || 3000;
+const port = 3000;
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
